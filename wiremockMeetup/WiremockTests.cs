@@ -13,7 +13,7 @@ namespace wiremockMeetup
         [TestMethod]
         public void WiremockSetup()
         {
-            var wiremockServer = FluentMockServer.Start(8025);
+            var wiremockServer = FluentMockServer.Start(80);
 
             var wildcard = new WildcardMatcher("*");
 
