@@ -8,6 +8,8 @@ using Flurl.Http;
 using wiremockMeetup.Dto;
 using Serilog;
 using Serilog.Core;
+using Flurl;
+using WireMock.Settings;
 
 namespace wiremockMeetup
 {
@@ -24,38 +26,248 @@ namespace wiremockMeetup
                         .CreateLogger();
         }
 
+
+
+
+
+
         [TestMethod]
-        public void WiremockSetup()
+        public void SimpleMockingGet()
         {
             var wiremockServer = FluentMockServer.Start(5000);
 
             wiremockServer
               .Given(
-              Request.Create().WithPath("/api/user")
+              Request.Create().WithPath("/api/*")
               .UsingGet()
+              .WithParam("firstname", "walter")
               )
               .AtPriority(100)
               .RespondWith(
                 Response.Create()
                   .WithStatusCode(200)
-                  .WithBodyAsJson(new UserDto() { firstName = "Walter", lastName = "Wiremock", userName = "WireWalter"})
+                  .WithBodyAsJson(new UserDto() { firstName = "Walter", lastName = "Wiremock", userName = "WalterWire" })
               );
 
-            string urlLocal = "http://localhost:5000/api/user";
-            UserDto resp = urlLocal.GetJsonAsync<UserDto>().Result;
+            UserDto resp = "http://localhost:5000/api/user"
+                            .SetQueryParams("firstname=walter")
+                            .GetJsonAsync<UserDto>().Result;
+
             log.Information("User: {@resp}", resp);
 
             wiremockServer.Stop();
         }
 
+
+
+
+
+        //[TestMethod]
+        //public void SimpleMockingPost()
+        //{
+        //    var wiremockServer = FluentMockServer.Start(5000);
+
+        //    wiremockServer
+        //      .Given(
+        //      Request.Create().WithPath("/api/*")
+        //      .UsingPost()
+        //      .WithParam("firstname", "walter")
+        //      )
+        //      .AtPriority(100)
+        //      .RespondWith(
+        //        Response.Create()
+        //          .WithStatusCode(200)
+        //          .WithBodyAsJson(new UserDto() { firstName = "Walter", lastName = "Wiremock", userName = "WalterWire" })
+        //      );
+
+        //    UserDto resp = "http://localhost:5000/api/user"
+        //                    .PostJsonAsync<UserDto>(new {"firstname" = "walter"}).Result;
+
+        //    log.Information("User: {@resp}", resp);
+
+        //    wiremockServer.Stop();
+        //}
+
+
+
+
+
+
         [TestMethod]
-        public void GetUserShoudReturnUserMax()
+        public void SimpleMockingWildcardInPath()
         {
-            string urlLocal = "http://localhost:5000/api/user";
-            string urlAzure = "http://playgroundapimeetup.azurewebsites.net/api/user";
-            UserDto resp = urlLocal.GetJsonAsync<UserDto>().Result;
+            var wiremockServer = FluentMockServer.Start(5000);
+
+            wiremockServer
+              .Given(
+              Request.Create().WithPath("/api/*")
+              .UsingGet()
+              .WithParam("firstname", "walter")
+              )
+              .AtPriority(100)
+              .RespondWith(
+                Response.Create()
+                  .WithStatusCode(200)
+                  .WithBodyAsJson(new UserDto() { firstName = "Walter", lastName = "Wiremock", userName = "WireWalter" })
+              );
+
+            UserDto resp = "http://localhost:5000/api/someotherPath"
+                        .SetQueryParams("firstname=walter")
+                        .GetJsonAsync<UserDto>().Result;
 
             log.Information("User: {@resp}", resp);
+
+            wiremockServer.Stop();
+        }
+
+
+
+
+
+
+        [TestMethod]
+        public void SimpleMockingWildcardInParameter()
+        {
+            var wiremockServer = FluentMockServer.Start(5000);
+
+            wiremockServer
+             .Given(
+             Request.Create().WithPath("/api/user")
+             .UsingGet()
+             .WithParam("firstname", new WildcardMatcher("wa*"))
+             )
+             .AtPriority(100)
+             .RespondWith(
+               Response.Create()
+                 .WithStatusCode(200)
+                 .WithBodyAsJson(new UserDto() { firstName = "Walter", lastName = "Wildcard", userName = "WalterWild" })
+             );
+
+            UserDto resp = "http://localhost:5000/api/someotherPath"
+                        .SetQueryParams("firstname=walter")
+                        .GetJsonAsync<UserDto>().Result;
+
+            log.Information("User: {@resp}", resp);
+
+            wiremockServer.Stop();
+        }
+
+
+
+
+
+
+
+        public void PriotityMapping()
+        {
+            var wiremockServer = FluentMockServer.Start(5000);
+
+            wiremockServer
+             .Given(
+             Request.Create().WithPath("/api/*")
+             .UsingGet()
+             .WithParam("firstname", "walter")
+             )
+             .AtPriority(100)
+             .RespondWith(
+               Response.Create()
+                 .WithStatusCode(200)
+                 .WithBodyAsJson(new UserDto() { firstName = "Walter", lastName = "Wiremock", userName = "WalterWire" })
+             );
+
+
+            wiremockServer
+              .Given(
+              Request.Create().WithPath("/api/user")
+              .UsingGet()
+              .WithParam("firstname", new WildcardMatcher("wa*"))
+              .WithParam("lastname", new WildcardMatcher("wo*"))
+              )
+              .AtPriority(100)
+              .RespondWith(
+                Response.Create()
+                  .WithStatusCode(200)
+                  .WithBodyAsJson(new UserDto() { firstName = "Walter", lastName = "Wildcard", userName = "WalterWild" })
+              );
+
+            UserDto resp = "http://localhost:5000/api/user"
+                            .SetQueryParams("firstname=walter")
+                            .GetJsonAsync<UserDto>().Result;
+
+            log.Information("User: {@resp}", resp);
+
+            wiremockServer.Stop();
+        }
+
+
+
+
+
+
+
+        public void WiremockWithSetting()
+        {
+            var setting = new FluentMockServerSettings();
+
+            setting.Port = 5000;
+            setting.AllowPartialMapping = true;
+
+            var wiremockServer = FluentMockServer.Start(setting);
+
+            wiremockServer
+                  .Given(
+                  Request.Create().WithPath("/api/user")
+                  .UsingGet()
+                  .WithParam("firstname", "fritz")
+                  )
+                  .AtPriority(100)
+                  .RespondWith(
+                    Response.Create()
+                      .WithStatusCode(200)
+                      .WithBodyAsJson(new UserDto() { firstName = "Walter", lastName = "Wiremock", userName = "WireWalter" })
+                  );
+
+            UserDto resp = "http://localhost:5000/api/user"
+                            .SetQueryParams("firstname=walter")
+                            .GetJsonAsync<UserDto>().Result;
+
+            log.Information("User: {@resp}", resp);
+
+            wiremockServer.Stop();
+        }
+
+
+
+
+
+        public void WiremockWithExternUrl()
+        {
+            var setting = new FluentMockServerSettings();
+
+            setting.Urls = new string[] { "http://playgroundapimeetup.azurewebsites.net" };
+
+            var wiremockServer = FluentMockServer.Start(setting);
+
+            wiremockServer
+              .Given(
+              Request.Create().WithPath("/api/user")
+              .UsingGet()
+              .WithParam("firstname", "fritz")
+              )
+              .AtPriority(100)
+              .RespondWith(
+                Response.Create()
+                  .WithStatusCode(200)
+                  .WithBodyAsJson(new UserDto() { firstName = "Walter", lastName = "Wiremock", userName = "WireWalter" })
+              );
+
+            UserDto resp = "http://localhost:5000/api/user"
+                            .SetQueryParams("firstname=walter")
+                            .GetJsonAsync<UserDto>().Result;
+
+            log.Information("User: {@resp}", resp);
+
+            wiremockServer.Stop();
         }
     }
 }
