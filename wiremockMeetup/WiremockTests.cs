@@ -28,7 +28,32 @@ namespace wiremockMeetup
 
 
 
+        [TestMethod]
+        public void WithoutMock()
+        {   
+            UserDto respGet = "http://localhost:5000/api/user"
+                            .GetJsonAsync<UserDto>().Result;
 
+            log.Information("User: {@resp}", respGet);
+
+            //UserDto respPost = "http://localhost:5000/api/user".PostJsonAsync(new { firstname = "walter"}).Result;
+
+            //log.Information("User: {@resp}", respPost);
+
+            UserDto respGetParam = "http://localhost:5000/api/user"
+                .SetQueryParams("firstname=Walter")
+                .SetQueryParams("lastname=Walter")
+                .SetQueryParams("username=Walter")
+                .GetJsonAsync<UserDto>().Result;
+
+            log.Information("User: {@resp}", respGetParam);
+
+            //UserDto respPostParam = "http://localhost:5000/api/user"
+            //             .SetQueryParams("firstname=walter")
+            //             .GetJsonAsync<UserDto>().Result;
+
+            //log.Information("User: {@resp}", respPostParam);
+        }
 
 
         [TestMethod]
@@ -123,8 +148,6 @@ namespace wiremockMeetup
 
 
 
-
-
         [TestMethod]
         public void SimpleMockingWildcardInParameter()
         {
@@ -157,7 +180,7 @@ namespace wiremockMeetup
 
 
 
-
+        [TestMethod]
         public void PriotityMapping()
         {
             var wiremockServer = FluentMockServer.Start(5000);
@@ -204,7 +227,7 @@ namespace wiremockMeetup
 
 
 
-
+        [TestMethod]
         public void WiremockWithSetting()
         {
             var setting = new FluentMockServerSettings();
@@ -239,7 +262,7 @@ namespace wiremockMeetup
 
 
 
-
+        [TestMethod]
         public void WiremockWithExternUrl()
         {
             var setting = new FluentMockServerSettings();
