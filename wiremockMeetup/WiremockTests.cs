@@ -71,7 +71,7 @@ namespace wiremockMeetup
 
             wiremockServer
               .Given(
-              Request.Create().WithPath("/api/*")
+              Request.Create().WithPath("/api/user")
               .UsingGet()
               )
               .AtPriority(100)
@@ -100,7 +100,7 @@ namespace wiremockMeetup
 
             wiremockServer
               .Given(
-              Request.Create().WithPath("/api/*")
+              Request.Create().WithPath("/api/user")
               .UsingGet()
               )
               .AtPriority(100)
@@ -116,7 +116,7 @@ namespace wiremockMeetup
             var resp = "http://localhost:5000/api/user"
                             .GetAsync().Result;
 
-            log.Information("Headers: {@header}", resp.Headers);
+            log.Information("Headers: {@header}", resp.Headers.ToString());
             log.Information("User: {@body}", resp.Content.ReadAsStringAsync().Result);
 
             wiremockServer.Stop();
@@ -133,7 +133,7 @@ namespace wiremockMeetup
 
             wiremockServer
               .Given(
-              Request.Create().WithPath("/api/*")
+              Request.Create().WithPath("/api/user")
               .UsingGet()
               )
               .AtPriority(100)
@@ -161,7 +161,7 @@ namespace wiremockMeetup
 
             wiremockServer
               .Given(
-              Request.Create().WithPath("/api/*")
+              Request.Create().WithPath("/api/user")
               .UsingPost() //<-- Post
               .WithParam("firstname", "Walter")
               )
@@ -195,20 +195,8 @@ namespace wiremockMeetup
             var wiremockServer = FluentMockServer.Start(5000);
 
             wiremockServer
-            .Given(
-            Request.Create().WithPath("/api/*")
-            .UsingGet()
-            )
-            .AtPriority(100)
-            .RespondWith(
-              Response.Create()
-                .WithStatusCode(200)
-                .WithBodyAsJson(new UserDto() { firstName = "Walter", lastName = "Wiremock", userName = "WalterWire" })
-            );
-
-            wiremockServer
               .Given(
-              Request.Create().WithPath("/api/*")
+              Request.Create().WithPath("/api/user")
               .UsingGet()
               .WithParam("firstname", "Wolfgang")
               )
@@ -232,13 +220,13 @@ namespace wiremockMeetup
 
 
         [TestMethod]
-        public void SimpleMockingGetWithParameterSatictWillFail()
+        public void SimpleMockingGetWithParameterStrictWillFail()
         {
             var wiremockServer = FluentMockServer.Start(5000);
 
             wiremockServer
               .Given(
-              Request.Create().WithPath("/api/*")
+              Request.Create().WithPath("/api/user")
               .UsingGet()
               .WithParam("firstname", "Wolfgang") //<-- Parameter mandatory
               )
@@ -270,7 +258,7 @@ namespace wiremockMeetup
 
             wiremockServer
               .Given(
-              Request.Create().WithPath("/api/*")
+              Request.Create().WithPath("/api/user")
               .UsingGet()
               .WithParam("firstname", "Wolfgang") //<-- Parameter
               )
@@ -288,7 +276,6 @@ namespace wiremockMeetup
 
             wiremockServer.Stop();
         }
-
 
 
 
@@ -313,7 +300,7 @@ namespace wiremockMeetup
                   .WithBodyAsJson(new UserDto() { firstName = "Walter", lastName = "Wiremock", userName = "WireWalter" })
               );
 
-            UserDto resp = "http://localhost:5000/api/someotherPath"
+            UserDto resp = "http://localhost:5000/api/someOtherPath"
                         .SetQueryParams("firstname=Walter")
                         .GetJsonAsync<UserDto>().Result;
 
@@ -360,15 +347,13 @@ namespace wiremockMeetup
         public void PriotityMapping()
         {
             var setting = new FluentMockServerSettings();
-
             setting.Port = 5000;
             setting.AllowPartialMapping = true;
-
             var wiremockServer = FluentMockServer.Start(setting);
 
             wiremockServer
              .Given(
-             Request.Create().WithPath("/api/*")
+             Request.Create().WithPath("/api/user")
              .UsingGet()
              .WithParam("firstname", "Walter")
              )
@@ -516,37 +501,6 @@ namespace wiremockMeetup
 
 
 
-        [TestMethod]
-        public void WiremockWithSetting()
-        {
-            var setting = new FluentMockServerSettings();
-
-            setting.Port = 5000;
-            setting.AllowPartialMapping = true;
-
-            var wiremockServer = FluentMockServer.Start(setting);
-
-            wiremockServer
-                  .Given(
-                  Request.Create().WithPath("/api/user")
-                  .UsingGet()
-                  .WithParam("firstname", "fritz")
-                  )
-                  .AtPriority(100)
-                  .RespondWith(
-                    Response.Create()
-                      .WithStatusCode(200)
-                      .WithBodyAsJson(new UserDto() { firstName = "Walter", lastName = "Wiremock", userName = "WireWalter" })
-                  );
-
-            UserDto resp = "http://localhost:5000/api/user"
-                            .SetQueryParams("firstname=walter")
-                            .GetJsonAsync<UserDto>().Result;
-
-            log.Information("User: {@resp}", resp);
-
-            wiremockServer.Stop();
-        }
 
 
 
@@ -577,10 +531,9 @@ namespace wiremockMeetup
                    );
 
             var resp = "http://localhost:5000/api/user"
-                            .OptionsAsync()
-                            .ReceiveJson().Result;
+                            .OptionsAsync().Result;
 
-            log.Information("User: {@resp}", resp);
+            log.Information("Headers: {@header}", resp.Headers);
 
             wiremockServer.Stop();
         }
