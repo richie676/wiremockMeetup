@@ -36,7 +36,9 @@ namespace wiremockMeetup
 
             log.Information("User: {@resp}", respGet);
 
-            //UserDto respPost = "http://localhost:5000/api/user".PostJsonAsync(new { firstname = "walter"}).Result;
+          
+            //var respPost = "http://localhost:5000/api/user"
+            //                .PostJsonAsync(null).Result;
 
             //log.Information("User: {@resp}", respPost);
 
@@ -65,7 +67,6 @@ namespace wiremockMeetup
               .Given(
               Request.Create().WithPath("/api/*")
               .UsingGet()
-              .WithParam("firstname", "walter")
               )
               .AtPriority(100)
               .RespondWith(
@@ -75,7 +76,32 @@ namespace wiremockMeetup
               );
 
             UserDto resp = "http://localhost:5000/api/user"
-                            .SetQueryParams("firstname=walter")
+                            .GetJsonAsync<UserDto>().Result;
+
+            log.Information("User: {@resp}", resp);
+
+            wiremockServer.Stop();
+        }
+
+
+
+        [TestMethod]
+        public void SimpleMockingGetReturn500()
+        {
+            var wiremockServer = FluentMockServer.Start(5000);
+
+            wiremockServer
+              .Given(
+              Request.Create().WithPath("/api/*")
+              .UsingGet()
+              )
+              .AtPriority(100)
+              .RespondWith(
+                Response.Create()
+                  .WithStatusCode(500) //<-- Code 500
+              );
+
+            UserDto resp = "http://localhost:5000/api/user"
                             .GetJsonAsync<UserDto>().Result;
 
             log.Information("User: {@resp}", resp);
@@ -87,31 +113,139 @@ namespace wiremockMeetup
 
 
 
-        //[TestMethod]
-        //public void SimpleMockingPost()
-        //{
-        //    var wiremockServer = FluentMockServer.Start(5000);
+        [TestMethod]
+        public void SimpleMockingPost()
+        {
+            var wiremockServer = FluentMockServer.Start(5000);
 
-        //    wiremockServer
-        //      .Given(
-        //      Request.Create().WithPath("/api/*")
-        //      .UsingPost()
-        //      .WithParam("firstname", "walter")
-        //      )
-        //      .AtPriority(100)
-        //      .RespondWith(
-        //        Response.Create()
-        //          .WithStatusCode(200)
-        //          .WithBodyAsJson(new UserDto() { firstName = "Walter", lastName = "Wiremock", userName = "WalterWire" })
-        //      );
+            wiremockServer
+              .Given(
+              Request.Create().WithPath("/api/*")
+              .UsingPost()
+              .WithParam("firstname", "Walter")
+              )
+              .AtPriority(100)
+              .RespondWith(
+                Response.Create()
+                  .WithStatusCode(200)
+                  .WithBodyAsJson(new UserDto() { firstName = "Walter", lastName = "Wiremock", userName = "WalterWire" })
+              );
 
-        //    UserDto resp = "http://localhost:5000/api/user"
-        //                    .PostJsonAsync<UserDto>(new {"firstname" = "walter"}).Result;
+            var data = new UserDto() { firstName = "Walter", lastName = "Wiremock", userName = "WalterWire" };
 
-        //    log.Information("User: {@resp}", resp);
+            var resp = "http://localhost:5000/api/user"
+                            .PostJsonAsync(data).Result;
 
-        //    wiremockServer.Stop();
-        //}
+            log.Information("User: {@resp}", resp);
+
+            wiremockServer.Stop();
+        }
+
+
+
+
+
+
+        [TestMethod]
+        public void SimpleMockingGetWithParameter()
+        {
+            var wiremockServer = FluentMockServer.Start(5000);
+
+            wiremockServer
+            .Given(
+            Request.Create().WithPath("/api/*")
+            .UsingGet()
+            )
+            .AtPriority(100)
+            .RespondWith(
+              Response.Create()
+                .WithStatusCode(200)
+                .WithBodyAsJson(new UserDto() { firstName = "Walter", lastName = "Wiremock", userName = "WalterWire" })
+            );
+
+            wiremockServer
+              .Given(
+              Request.Create().WithPath("/api/*")
+              .UsingGet()
+              .WithParam("firstname", "Wolfgang")
+              )
+              .AtPriority(100)
+              .RespondWith(
+                Response.Create()
+                  .WithStatusCode(200)
+                  .WithBodyAsJson(new UserDto() { firstName = "Wolfgang", lastName = "Wiremock", userName = "Wolfwire" })
+              );
+
+
+            UserDto resp = "http://localhost:5000/api/user"
+                            .SetQueryParams("firstname=Wolfgang")
+                            .GetJsonAsync<UserDto>().Result;
+
+            log.Information("User: {@resp}", resp);
+
+            wiremockServer.Stop();
+        }
+
+
+
+        [TestMethod]
+        public void SimpleMockingGetWithParameterStictWillFail()
+        {
+            var wiremockServer = FluentMockServer.Start(5000);
+
+            wiremockServer
+              .Given(
+              Request.Create().WithPath("/api/*")
+              .UsingGet()
+              .WithParam("firstname", "Wolfgang")
+              )
+              .AtPriority(100)
+              .RespondWith(
+                Response.Create()
+                  .WithStatusCode(200)
+                  .WithBodyAsJson(new UserDto() { firstName = "Wolfgang", lastName = "Wiremock", userName = "Wolfwire" })
+              );
+
+            UserDto resp = "http://localhost:5000/api/user"
+                            .GetJsonAsync<UserDto>().Result;
+
+            log.Information("User: {@resp}", resp);
+
+            wiremockServer.Stop();
+        }
+
+
+        [TestMethod]
+        public void SimpleMockingGetWithParameterWithPartialMapping()
+        {
+            var setting = new FluentMockServerSettings();
+
+            setting.Port = 5000;
+            setting.AllowPartialMapping = true;
+
+            var wiremockServer = FluentMockServer.Start(setting);
+
+            wiremockServer
+              .Given(
+              Request.Create().WithPath("/api/*")
+              .UsingGet()
+              .WithParam("firstname", "Wolfgang")
+              )
+              .AtPriority(100)
+              .RespondWith(
+                Response.Create()
+                  .WithStatusCode(200)
+                  .WithBodyAsJson(new UserDto() { firstName = "Wolfgang", lastName = "Wiremock", userName = "Wolfwire" })
+              );
+
+            UserDto resp = "http://localhost:5000/api/user"
+                            .GetJsonAsync<UserDto>().Result;
+
+            log.Information("User: {@resp}", resp);
+
+            wiremockServer.Stop();
+        }
+
 
 
 
@@ -127,7 +261,7 @@ namespace wiremockMeetup
               .Given(
               Request.Create().WithPath("/api/*")
               .UsingGet()
-              .WithParam("firstname", "walter")
+              .WithParam("firstname", "Walter")
               )
               .AtPriority(100)
               .RespondWith(
@@ -137,7 +271,7 @@ namespace wiremockMeetup
               );
 
             UserDto resp = "http://localhost:5000/api/someotherPath"
-                        .SetQueryParams("firstname=walter")
+                        .SetQueryParams("firstname=Walter")
                         .GetJsonAsync<UserDto>().Result;
 
             log.Information("User: {@resp}", resp);
@@ -151,13 +285,15 @@ namespace wiremockMeetup
         [TestMethod]
         public void SimpleMockingWildcardInParameter()
         {
+            //https://github.com/WireMock-Net/WireMock.Net/wiki/Request-Matching
+
             var wiremockServer = FluentMockServer.Start(5000);
 
             wiremockServer
              .Given(
              Request.Create().WithPath("/api/user")
              .UsingGet()
-             .WithParam("firstname", new WildcardMatcher("wa*"))
+             .WithParam("firstname", new WildcardMatcher("Wa*"))
              )
              .AtPriority(100)
              .RespondWith(
@@ -166,8 +302,8 @@ namespace wiremockMeetup
                  .WithBodyAsJson(new UserDto() { firstName = "Walter", lastName = "Wildcard", userName = "WalterWild" })
              );
 
-            UserDto resp = "http://localhost:5000/api/someotherPath"
-                        .SetQueryParams("firstname=walter")
+            UserDto resp = "http://localhost:5000/api/user"
+                        .SetQueryParams("firstname=Walter")
                         .GetJsonAsync<UserDto>().Result;
 
             log.Information("User: {@resp}", resp);
@@ -177,44 +313,92 @@ namespace wiremockMeetup
 
 
 
-
-
-
         [TestMethod]
         public void PriotityMapping()
         {
-            var wiremockServer = FluentMockServer.Start(5000);
+            var setting = new FluentMockServerSettings();
+
+            setting.Port = 5000;
+            setting.AllowPartialMapping = true;
+
+            var wiremockServer = FluentMockServer.Start(setting);
 
             wiremockServer
              .Given(
              Request.Create().WithPath("/api/*")
              .UsingGet()
-             .WithParam("firstname", "walter")
+             .WithParam("firstname", "Walter")
              )
-             .AtPriority(100)
+             .AtPriority(50) // <-- Priority 50
              .RespondWith(
                Response.Create()
                  .WithStatusCode(200)
-                 .WithBodyAsJson(new UserDto() { firstName = "Walter", lastName = "Wiremock", userName = "WalterWire" })
+                 .WithBodyAsJson(new UserDto() { firstName = "Walter", lastName = "Wiremock", userName = "PriorityA" })
              );
-
 
             wiremockServer
               .Given(
               Request.Create().WithPath("/api/user")
               .UsingGet()
-              .WithParam("firstname", new WildcardMatcher("wa*"))
-              .WithParam("lastname", new WildcardMatcher("wo*"))
+              .WithParam("firstname", "Walter")
+              )
+              .AtPriority(100) // <-- Priority 100
+              .RespondWith(
+                Response.Create()
+                  .WithStatusCode(200)
+                  .WithBodyAsJson(new UserDto() { firstName = "Walter", lastName = "Wildcard", userName = "PriorityB" })
+              );
+
+            UserDto resp = "http://localhost:5000/api/user"
+                            .SetQueryParams("firstname=Walter")
+                            .GetJsonAsync<UserDto>().Result;
+
+            log.Information("User: {@resp}", resp);
+
+            wiremockServer.Stop();
+        }
+
+
+        [TestMethod]
+        public void ResetMapping()
+        {
+            var setting = new FluentMockServerSettings();
+
+            setting.Port = 5000;
+            setting.AllowPartialMapping = true;
+
+            var wiremockServer = FluentMockServer.Start(setting);
+
+            wiremockServer
+             .Given(
+             Request.Create().WithPath("/api/*")
+             .UsingGet()
+             .WithParam("firstname", "Walter")
+             )
+             .AtPriority(50)
+             .RespondWith(
+               Response.Create()
+                 .WithStatusCode(200)
+                 .WithBodyAsJson(new UserDto() { firstName = "Walter", lastName = "Wiremock", userName = "PriorityA" })
+             );
+
+            wiremockServer.ResetMappings(); // <-- reset Mapping
+
+            wiremockServer
+              .Given(
+              Request.Create().WithPath("/api/user")
+              .UsingGet()
+              .WithParam("firstname", "Walter")
               )
               .AtPriority(100)
               .RespondWith(
                 Response.Create()
                   .WithStatusCode(200)
-                  .WithBodyAsJson(new UserDto() { firstName = "Walter", lastName = "Wildcard", userName = "WalterWild" })
+                  .WithBodyAsJson(new UserDto() { firstName = "Walter", lastName = "Wildcard", userName = "PriorityB" })
               );
 
             UserDto resp = "http://localhost:5000/api/user"
-                            .SetQueryParams("firstname=walter")
+                            .SetQueryParams("firstname=Walter")
                             .GetJsonAsync<UserDto>().Result;
 
             log.Information("User: {@resp}", resp);
@@ -224,7 +408,63 @@ namespace wiremockMeetup
 
 
 
+        [TestMethod]
+        public void LogEntries()
+        {
+            var setting = new FluentMockServerSettings();
 
+            setting.Port = 5000;
+            setting.AllowPartialMapping = true;
+
+            var wiremockServer = FluentMockServer.Start(setting);
+
+            wiremockServer
+             .Given(
+             Request.Create().WithPath("/api/*")
+             .UsingGet()
+             .WithParam("firstname", "Walter")
+             )
+             .AtPriority(50)
+             .RespondWith(
+               Response.Create()
+                 .WithStatusCode(200)
+                 .WithBodyAsJson(new UserDto() { firstName = "Walter", lastName = "Wiremock", userName = "PriorityA" })
+             );
+
+            wiremockServer
+              .Given(
+              Request.Create().WithPath("/api/user")
+              .UsingGet()
+              .WithParam("firstname", "Walter")
+              .WithParam("lastname", "Wildcard")
+              )
+              .AtPriority(100)
+              .RespondWith(
+                Response.Create()
+                  .WithStatusCode(200)
+                  .WithBodyAsJson(new UserDto() { firstName = "Walter", lastName = "Wildcard", userName = "PriorityB" })
+              );
+
+            UserDto respA = "http://localhost:5000/api/user"
+                .SetQueryParams("firstname=Wa")
+                .GetJsonAsync<UserDto>().Result;
+            log.Information("User: {@resp}", respA);
+
+            UserDto respB = "http://localhost:5000/api/user"
+                            .SetQueryParams("firstname=Walter")
+                            .GetJsonAsync<UserDto>().Result;
+            log.Information("User: {@resp}", respB);
+
+            UserDto respC = "http://localhost:5000/api/user"
+                .SetQueryParams("firstname=Walter")
+                .SetQueryParams("lastname=Wildcard")
+                .GetJsonAsync<UserDto>().Result;
+            log.Information("User: {@resp}", respC);
+
+            log.Information("Logs: {@LogEntries}", wiremockServer.LogEntries);
+
+            wiremockServer.Stop();
+        }
 
 
         [TestMethod]
@@ -262,35 +502,35 @@ namespace wiremockMeetup
 
 
 
-        [TestMethod]
-        public void WiremockWithExternUrl()
-        {
-            var setting = new FluentMockServerSettings();
+        //[TestMethod]
+        //public void WiremockWithExternUrl()
+        //{
+        //    var setting = new FluentMockServerSettings();
 
-            setting.Urls = new string[] { "http://playgroundapimeetup.azurewebsites.net" };
+        //    setting.Urls = new string[] { "http://playgroundapimeetup.azurewebsites.net:80" };
 
-            var wiremockServer = FluentMockServer.Start(setting);
+        //    var wiremockServer = FluentMockServer.Start(setting);
 
-            wiremockServer
-              .Given(
-              Request.Create().WithPath("/api/user")
-              .UsingGet()
-              .WithParam("firstname", "fritz")
-              )
-              .AtPriority(100)
-              .RespondWith(
-                Response.Create()
-                  .WithStatusCode(200)
-                  .WithBodyAsJson(new UserDto() { firstName = "Walter", lastName = "Wiremock", userName = "WireWalter" })
-              );
+        //    wiremockServer
+        //      .Given(
+        //      Request.Create().WithPath("/api/user")
+        //      .UsingGet()
+        //      .WithParam("firstname", "Walter")
+        //      )
+        //      .AtPriority(100)
+        //      .RespondWith(
+        //        Response.Create()
+        //          .WithStatusCode(200)
+        //          .WithBodyAsJson(new UserDto() { firstName = "Walter", lastName = "Wiremock", userName = "WireWalter" })
+        //      );
 
-            UserDto resp = "http://localhost:5000/api/user"
-                            .SetQueryParams("firstname=walter")
-                            .GetJsonAsync<UserDto>().Result;
+        //    UserDto resp = "http://playgroundapimeetup.azurewebsites.net/api/user"
+        //                    .SetQueryParams("firstname=Walter")
+        //                    .GetJsonAsync<UserDto>().Result;
 
-            log.Information("User: {@resp}", resp);
+        //    log.Information("User: {@resp}", resp);
 
-            wiremockServer.Stop();
-        }
+        //    wiremockServer.Stop();
+        //}
     }
 }
