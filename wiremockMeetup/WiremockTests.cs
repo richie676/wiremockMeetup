@@ -537,5 +537,67 @@ namespace wiremockMeetup
 
             wiremockServer.Stop();
         }
+
+
+        [TestMethod]
+        public void Playground()
+        {
+            var setting = new FluentMockServerSettings();
+
+            setting.Port = 5000;
+            setting.AllowPartialMapping = true;
+
+            var wiremockServer = FluentMockServer.Start(setting);
+
+            wiremockServer
+             .Given(
+             Request.Create().WithPath("/api/*")
+             .UsingGet()
+             .WithParam("firstname", "Walter")
+             )
+             .AtPriority(50)
+             .RespondWith(
+               Response.Create()
+                 .WithStatusCode(200)
+                 .WithBodyAsJson(new UserDto() { firstName = "Walter", lastName = "Wiremock", userName = "PriorityA" })
+             );
+
+            wiremockServer
+              .Given(
+              Request.Create().WithPath("/api/user")
+              .UsingGet()
+              .WithParam("firstname", "Walter")
+              .WithParam("lastname", "Wildcard")
+              )
+              .AtPriority(100)
+              .RespondWith(
+                Response.Create()
+                  .WithStatusCode(200)
+                  .WithBodyAsJson(new UserDto() { firstName = "Walter", lastName = "Wildcard", userName = "PriorityB" })
+              );
+
+            UserDto respA = "http://localhost:5000/api/user"
+                .SetQueryParams("firstname=Wa")
+                .GetJsonAsync<UserDto>().Result;
+            log.Information("User: {@resp}", respA);
+
+            UserDto respB = "http://localhost:5000/api/user"
+                            .SetQueryParams("firstname=Walter")
+                            .GetJsonAsync<UserDto>().Result;
+            log.Information("User: {@resp}", respB);
+
+            UserDto respC = "http://localhost:5000/api/user"
+                .SetQueryParams("firstname=Walter")
+                .SetQueryParams("lastname=Wildcard")
+                .GetJsonAsync<UserDto>().Result;
+            log.Information("User: {@resp}", respC);
+
+            log.Information("Logs: {@LogEntries}", wiremockServer.LogEntries); //<-- LogEntries
+
+            wiremockServer.Stop();
+        }
+
+
+
     }
 }
